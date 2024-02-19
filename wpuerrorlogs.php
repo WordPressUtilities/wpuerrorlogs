@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.1.0
+Version: 0.1.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.1.0';
+    private $plugin_version = '0.1.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -132,37 +132,14 @@ class WPUErrorLogs {
     public function page_content__main() {
 
         /* Find debug file */
-        $logfile = ABSPATH . '/wp-content/debug.log';
         if (!WP_DEBUG_LOG) {
             echo 'Debug logs are not enabled';
             return;
         }
-        if (is_readable(WP_DEBUG_LOG)) {
-            $logfile = WP_DEBUG_LOG;
-        }
 
-        $errors = $this->extract_logs_from_file($logfile);
-
-        $textCounts = [];
-
-        foreach ($errors as $error) {
-            if (!isset($textCounts[$error['text']])) {
-                $textCounts[$error['text']] = 0;
-            }
-            $textCounts[$error['text']]++;
-        }
-        arsort($textCounts);
+        $errors = $this->extract_logs_from_file();
 
         /* Keep only first five and extract data */
-        $textCounts = array_slice($textCounts, 0, 5, true);
-        $display_values = array();
-        foreach ($textCounts as $text => $count) {
-            $display_values[] = array(
-                'count' => $count,
-                'text' => $this->expand_error_text($text)
-            );
-        }
-
         $colnames = array(
             'count' => __('Count', 'wpuerrorlogs'),
             'date' => __('Date', 'wpuerrorlogs'),
@@ -170,14 +147,14 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
+        $top_errors = $this->sort_errors_by_top($errors, 10);
         echo '<h2>' . __('Top errors', 'wpuerrorlogs') . '</h2>';
-        echo $this->array_to_html_table($display_values, array(
+        echo $this->array_to_html_table($top_errors, array(
             'table_classname' => 'widefat',
             'colnames' => $colnames
         ));
 
-        $latest_errors = array_reverse($errors);
-        $latest_errors = array_slice($latest_errors, 0, 5, true);
+        $latest_errors = $this->sort_errors_by_latest($errors, 10);
         echo '<h2>' . __('Latest errors', 'wpuerrorlogs') . '</h2>';
         echo $this->array_to_html_table($latest_errors, array(
             'table_classname' => 'widefat',
@@ -187,10 +164,51 @@ class WPUErrorLogs {
     }
 
     /* ----------------------------------------------------------
+      Sort errors
+    ---------------------------------------------------------- */
+
+    function sort_errors_by_top($errors, $max_number = 5) {
+        $top_errors_raw = [];
+        foreach ($errors as $error) {
+            if (!isset($top_errors_raw[$error['text']])) {
+                $top_errors_raw[$error['text']] = 0;
+            }
+            $top_errors_raw[$error['text']]++;
+        }
+        arsort($top_errors_raw);
+
+        $top_errors_raw = array_slice($top_errors_raw, 0, $max_number, true);
+
+        $top_errors = array();
+        foreach ($top_errors_raw as $text => $count) {
+            $top_errors[] = array(
+                'count' => $count,
+                'text' => $this->expand_error_text($text)
+            );
+        }
+        return $top_errors;
+    }
+
+    function sort_errors_by_latest($errors, $max_number = 5) {
+        $latest_errors = array_reverse($errors);
+        $latest_errors = array_slice($latest_errors, 0, $max_number, true);
+        foreach ($latest_errors as $i => $error) {
+            $latest_errors[$i]['text'] = $this->expand_error_text($error['text']);
+        }
+        return $latest_errors;
+    }
+
+    /* ----------------------------------------------------------
       Extract logs from file
     ---------------------------------------------------------- */
 
-    function extract_logs_from_file($file) {
+    function extract_logs_from_file() {
+
+        $file = ABSPATH . '/wp-content/debug.log';
+        if (is_readable(WP_DEBUG_LOG)) {
+            $file = WP_DEBUG_LOG;
+        }
+
         $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         $errors = [];
         $currentError = array();

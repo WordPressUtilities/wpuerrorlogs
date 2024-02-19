@@ -1,5 +1,7 @@
 # WPU Error Logs
 
+[![PHP workflow](https://github.com/WordPressUtilities/wpuerrorlogs/actions/workflows/php.yml/badge.svg 'PHP workflow')](https://github.com/WordPressUtilities/wpuerrorlogs/actions)
+
 Make sense of your log files
 
 
