@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.1.1
+Version: 0.2.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.1.1';
+    private $plugin_version = '0.2.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -54,11 +54,11 @@ class WPUErrorLogs {
         # CUSTOM PAGE
         $admin_pages = array(
             'main' => array(
-                'icon_url' => 'dashicons-admin-generic',
+                'icon_url' => 'dashicons-sos',
                 'menu_name' => $this->plugin_settings['name'],
-                'name' => 'Main page',
+                'name' => $this->plugin_settings['name'],
                 'settings_link' => true,
-                'settings_name' => __('Settings'),
+                'settings_name' => __('Settings', 'wpuerrorlogs'),
                 'function_content' => array(&$this,
                     'page_content__main'
                 )
@@ -137,7 +137,7 @@ class WPUErrorLogs {
             return;
         }
 
-        $errors = $this->extract_logs_from_file();
+        $errors = $this->get_logs();
 
         /* Keep only first five and extract data */
         $colnames = array(
@@ -147,19 +147,23 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
+        /* Top errors */
         $top_errors = $this->sort_errors_by_top($errors, 10);
         echo '<h2>' . __('Top errors', 'wpuerrorlogs') . '</h2>';
-        echo $this->array_to_html_table($top_errors, array(
+        $html_errors = $this->array_to_html_table($top_errors, array(
             'table_classname' => 'widefat',
             'colnames' => $colnames
         ));
+        echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
 
+        /* Latest errors */
         $latest_errors = $this->sort_errors_by_latest($errors, 10);
         echo '<h2>' . __('Latest errors', 'wpuerrorlogs') . '</h2>';
-        echo $this->array_to_html_table($latest_errors, array(
+        $html_errors = $this->array_to_html_table($latest_errors, array(
             'table_classname' => 'widefat',
             'colnames' => $colnames
         ));
+        echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
 
     }
 
@@ -202,12 +206,42 @@ class WPUErrorLogs {
       Extract logs from file
     ---------------------------------------------------------- */
 
-    function extract_logs_from_file() {
-
+    function get_logs() {
         $file = ABSPATH . '/wp-content/debug.log';
         if (is_readable(WP_DEBUG_LOG)) {
             $file = WP_DEBUG_LOG;
         }
+        if (!is_readable($file)) {
+            return array();
+        }
+
+        $errors = $this->get_logs_from_file($file);
+        $previous_file = $this->find_previous_log_file($file);
+        if ($previous_file) {
+            $errors_previous = $this->get_logs_from_file($previous_file);
+            $errors = $errors + $errors_previous;
+        }
+        return $errors;
+    }
+
+    function find_previous_log_file($file) {
+        $date_formats = array('Ymd', 'dmY');
+        foreach ($date_formats as $date_format) {
+            $now_date = date($date_format);
+            if (strpos($file, $now_date) === false) {
+                continue;
+            }
+            $previous_date = date($date_format, time() - 86400);
+            $previous_file = str_replace($now_date, $previous_date, $file);
+            if (is_readable($previous_file)) {
+                return $previous_file;
+            }
+        }
+
+        return false;
+    }
+
+    function get_logs_from_file($file) {
 
         $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         $errors = [];
@@ -300,6 +334,11 @@ class WPUErrorLogs {
     }
 
     function array_to_html_table($array, $args = array()) {
+
+        if (empty($array)) {
+            return '';
+        }
+
         $default_args = array(
             'table_classname' => 'widefat',
             'colnames' => array()
@@ -307,6 +346,7 @@ class WPUErrorLogs {
         if (!is_array($args)) {
             $args = array();
         }
+
         $args = array_merge($default_args, $args);
 
         $html = '<table class="' . esc_attr($args['table_classname']) . '">';
