@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.2.0
+Version: 0.2.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.2.0';
+    private $plugin_version = '0.2.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -150,7 +150,7 @@ class WPUErrorLogs {
         /* Top errors */
         $top_errors = $this->sort_errors_by_top($errors, 10);
         echo '<h2>' . __('Top errors', 'wpuerrorlogs') . '</h2>';
-        $html_errors = $this->array_to_html_table($top_errors, array(
+        $html_errors = $this->basetoolbox->array_to_html_table($top_errors, array(
             'table_classname' => 'widefat',
             'colnames' => $colnames
         ));
@@ -159,7 +159,7 @@ class WPUErrorLogs {
         /* Latest errors */
         $latest_errors = $this->sort_errors_by_latest($errors, 10);
         echo '<h2>' . __('Latest errors', 'wpuerrorlogs') . '</h2>';
-        $html_errors = $this->array_to_html_table($latest_errors, array(
+        $html_errors = $this->basetoolbox->array_to_html_table($latest_errors, array(
             'table_classname' => 'widefat',
             'colnames' => $colnames
         ));
@@ -332,49 +332,6 @@ class WPUErrorLogs {
         }
         return $text;
     }
-
-    function array_to_html_table($array, $args = array()) {
-
-        if (empty($array)) {
-            return '';
-        }
-
-        $default_args = array(
-            'table_classname' => 'widefat',
-            'colnames' => array()
-        );
-        if (!is_array($args)) {
-            $args = array();
-        }
-
-        $args = array_merge($default_args, $args);
-
-        $html = '<table class="' . esc_attr($args['table_classname']) . '">';
-
-        // HEAD
-        $html .= '<thead><tr>';
-        foreach ($array[0] as $key => $value) {
-            $label = htmlspecialchars($key);
-            if (isset($args['colnames'][$key])) {
-                $label = $args['colnames'][$key];
-            }
-            $html .= '<th>' . $label . '</th>';
-        }
-        $html .= '</tr></thead>';
-
-        $html .= '<tbody>';
-        foreach ($array as $key => $value) {
-            $html .= '<tr>';
-            foreach ($value as $key2 => $value2) {
-                $html .= '<td>' . htmlspecialchars($value2) . '</td>';
-            }
-            $html .= '</tr>';
-        }
-        $html .= '</tbody>';
-        $html .= '</table>';
-        return $html;
-    }
-
 }
 
 $WPUErrorLogs = new WPUErrorLogs();
