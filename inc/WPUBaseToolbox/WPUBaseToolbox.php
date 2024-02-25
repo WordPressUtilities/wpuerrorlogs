@@ -4,7 +4,7 @@ namespace wpuerrorlogs;
 /*
 Class Name: WPU Base Toolbox
 Description: Cool helpers for WordPress Plugins
-Version: 0.12.0
+Version: 0.12.1
 Class URI: https://github.com/WordPressUtilities/wpubaseplugin
 Author: Darklg
 Author URI: https://darklg.me/
@@ -15,7 +15,7 @@ License URI: https://opensource.org/licenses/MIT
 defined('ABSPATH') || die;
 
 class WPUBaseToolbox {
-    private $plugin_version = '0.12.0';
+    private $plugin_version = '0.12.1';
     public function __construct() {
         add_action('wp_enqueue_scripts', array(&$this,
             'form_scripts'
@@ -405,6 +405,8 @@ class WPUBaseToolbox {
         /* Fix args */
         $default_args = array(
             'table_classname' => 'widefat',
+            'htmlspecialchars_td' => true,
+            'htmlspecialchars_th' => true,
             'colnames' => array()
         );
         if (!is_array($args)) {
@@ -421,7 +423,10 @@ class WPUBaseToolbox {
             if (isset($args['colnames'][$key])) {
                 $label = $args['colnames'][$key];
             }
-            $html .= '<th>' . htmlspecialchars($label) . '</th>';
+            if ($args['htmlspecialchars_th']) {
+                $label = htmlspecialchars($label);
+            }
+            $html .= '<th>' . $label . '</th>';
         }
         $html .= '</tr></thead>';
 
@@ -430,7 +435,10 @@ class WPUBaseToolbox {
         foreach ($array as $line) {
             $html .= '<tr>';
             foreach ($line as $value) {
-                $html .= '<td>' . htmlspecialchars($value) . '</td>';
+                if ($args['htmlspecialchars_td']) {
+                    $value = htmlspecialchars($value);
+                }
+                $html .= '<td>' . $value . '</td>';
             }
             $html .= '</tr>';
         }

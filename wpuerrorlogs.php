@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.2.1
+Version: 0.3.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.2.1';
+    private $plugin_version = '0.3.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -139,6 +139,12 @@ class WPUErrorLogs {
 
         $errors = $this->get_logs();
 
+        /* Prepare for display */
+        $errors = array_map(function ($item) {
+            $item['text'] = $this->display_content_with_toggle($item['text']);
+            return $item;
+        }, $errors);
+
         /* Keep only first five and extract data */
         $colnames = array(
             'count' => __('Count', 'wpuerrorlogs'),
@@ -151,7 +157,8 @@ class WPUErrorLogs {
         $top_errors = $this->sort_errors_by_top($errors, 10);
         echo '<h2>' . __('Top errors', 'wpuerrorlogs') . '</h2>';
         $html_errors = $this->basetoolbox->array_to_html_table($top_errors, array(
-            'table_classname' => 'widefat',
+            'table_classname' => 'widefat striped',
+            'htmlspecialchars_td' => false,
             'colnames' => $colnames
         ));
         echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
@@ -160,7 +167,8 @@ class WPUErrorLogs {
         $latest_errors = $this->sort_errors_by_latest($errors, 10);
         echo '<h2>' . __('Latest errors', 'wpuerrorlogs') . '</h2>';
         $html_errors = $this->basetoolbox->array_to_html_table($latest_errors, array(
-            'table_classname' => 'widefat',
+            'table_classname' => 'widefat striped',
+            'htmlspecialchars_td' => false,
             'colnames' => $colnames
         ));
         echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
@@ -216,29 +224,34 @@ class WPUErrorLogs {
         }
 
         $errors = $this->get_logs_from_file($file);
-        $previous_file = $this->find_previous_log_file($file);
-        if ($previous_file) {
+        $previous_files = $this->find_previous_log_files($file, 5);
+        foreach ($previous_files as $previous_file) {
             $errors_previous = $this->get_logs_from_file($previous_file);
-            $errors = $errors + $errors_previous;
+            foreach ($errors_previous as $error) {
+                $errors[] = $error;
+            }
         }
         return $errors;
     }
 
-    function find_previous_log_file($file) {
+    function find_previous_log_files($file, $number_of_days = 5) {
         $date_formats = array('Ymd', 'dmY');
+        $previous_files = array();
         foreach ($date_formats as $date_format) {
             $now_date = date($date_format);
             if (strpos($file, $now_date) === false) {
                 continue;
             }
-            $previous_date = date($date_format, time() - 86400);
-            $previous_file = str_replace($now_date, $previous_date, $file);
-            if (is_readable($previous_file)) {
-                return $previous_file;
+            for ($i = 1; $i <= $number_of_days; $i++) {
+                $previous_date = date($date_format, time() - 86400 * $i);
+                $previous_file = str_replace($now_date, $previous_date, $file);
+                if (is_readable($previous_file)) {
+                    $previous_files[] = $previous_file;
+                }
             }
         }
 
-        return false;
+        return $previous_files;
     }
 
     function get_logs_from_file($file) {
@@ -269,7 +282,6 @@ class WPUErrorLogs {
             $currentError['text'] = $this->minimize_error_text($currentError['text']);
             $errors[] = $currentError;
         }
-
         return $errors;
     }
 
@@ -277,7 +289,7 @@ class WPUErrorLogs {
         /* Extract values */
         $date_parts = explode(']', $line);
         $date = str_replace('[', '', $date_parts[0]);
-        $text = trim(substr($line, strlen('[' . $date . ']'), -1));
+        $text = trim(substr($line, strlen('[' . $date . ']')));
 
         /* Extract type */
         $type = 'none';
@@ -309,6 +321,26 @@ class WPUErrorLogs {
     /* ----------------------------------------------------------
       Helpers
     ---------------------------------------------------------- */
+
+    /* Display content
+    -------------------------- */
+
+    function display_content_with_toggle($content) {
+        $content = strip_tags($content);
+        if (strpos($content, "\n") === false) {
+            return $content;
+        }
+        $content_parts = explode("\n", $content);
+        if (!isset($content_parts[1])) {
+            return $content;
+        }
+        $content = $content_parts[0];
+        $content .= '<details><summary>' . __('Full error', 'wpuerrorlogs') . '</summary><pre style="overflow:auto">' . implode("\n", $content_parts) . '</pre></details>';
+        return $content;
+    }
+
+    /* Minimize text
+    -------------------------- */
 
     function minimize_get_correspondances() {
         return array(

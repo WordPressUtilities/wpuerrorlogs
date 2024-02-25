@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2024-02-20 23:00+0700\n"
+"POT-Creation-Date: 2024-02-25 21:31+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -28,30 +28,34 @@ msgstr "Réglages"
 msgid "Import Settings"
 msgstr "Paramètres d'importation"
 
-#: wpuerrorlogs.php:144
+#: wpuerrorlogs.php:150
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:145
+#: wpuerrorlogs.php:151
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:146
+#: wpuerrorlogs.php:152
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:147
+#: wpuerrorlogs.php:153
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:152
+#: wpuerrorlogs.php:158
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:157 wpuerrorlogs.php:166
+#: wpuerrorlogs.php:164 wpuerrorlogs.php:174
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:161
+#: wpuerrorlogs.php:168
 msgid "Latest errors"
 msgstr "Dernières erreurs"
+
+#: wpuerrorlogs.php:338
+msgid "Full error"
+msgstr "Erreur complète"
