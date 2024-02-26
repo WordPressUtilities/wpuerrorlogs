@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.3.0
+Version: 0.3.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.3.0';
+    private $plugin_version = '0.3.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -215,16 +215,35 @@ class WPUErrorLogs {
     ---------------------------------------------------------- */
 
     function get_logs() {
+
+        $number_of_days = 5;
+        $previous_files = array();
+
+        /* Try to obtain previous files */
         $file = ABSPATH . '/wp-content/debug.log';
-        if (is_readable(WP_DEBUG_LOG)) {
-            $file = WP_DEBUG_LOG;
+        $debug_dir = dirname(WP_DEBUG_LOG);
+        if (is_dir($debug_dir)) {
+            if (is_readable(WP_DEBUG_LOG)) {
+                $file = WP_DEBUG_LOG;
+            } else {
+                /* Find most recent file */
+                $previous_files = glob($debug_dir . '/*.log');
+                arsort($previous_files);
+                if (isset($previous_files[0])) {
+                    $file = array_shift($previous_files);
+                    $previous_files = array_slice($previous_files, 0, $number_of_days);
+                }
+            }
         }
         if (!is_readable($file)) {
             return array();
         }
 
+        /* Parse errors in files */
         $errors = $this->get_logs_from_file($file);
-        $previous_files = $this->find_previous_log_files($file, 5);
+        if (empty($previous_files)) {
+            $previous_files = $this->find_previous_log_files($file, $number_of_days);
+        }
         foreach ($previous_files as $previous_file) {
             $errors_previous = $this->get_logs_from_file($previous_file);
             foreach ($errors_previous as $error) {
