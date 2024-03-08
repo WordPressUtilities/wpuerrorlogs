@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.3.1
+Version: 0.4.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.3.1';
+    private $plugin_version = '0.4.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -202,8 +202,7 @@ class WPUErrorLogs {
     }
 
     function sort_errors_by_latest($errors, $max_number = 5) {
-        $latest_errors = array_reverse($errors);
-        $latest_errors = array_slice($latest_errors, 0, $max_number, true);
+        $latest_errors = array_slice($errors, 0, $max_number, true);
         foreach ($latest_errors as $i => $error) {
             $latest_errors[$i]['text'] = $this->expand_error_text($error['text']);
         }
@@ -301,7 +300,8 @@ class WPUErrorLogs {
             $currentError['text'] = $this->minimize_error_text($currentError['text']);
             $errors[] = $currentError;
         }
-        return $errors;
+
+        return array_reverse($errors);
     }
 
     function get_error_from_line($line) {
@@ -346,15 +346,13 @@ class WPUErrorLogs {
 
     function display_content_with_toggle($content) {
         $content = strip_tags($content);
-        if (strpos($content, "\n") === false) {
-            return $content;
-        }
         $content_parts = explode("\n", $content);
-        if (!isset($content_parts[1])) {
+        $minimized_error = str_replace(ABSPATH, '', $content_parts[0]);
+        if ($minimized_error == $content) {
             return $content;
         }
-        $content = $content_parts[0];
-        $content .= '<details><summary>' . __('Full error', 'wpuerrorlogs') . '</summary><pre style="overflow:auto">' . implode("\n", $content_parts) . '</pre></details>';
+        $content = $minimized_error;
+        $content .= '<details><summary>' . __('Full error', 'wpuerrorlogs') . '</summary><pre style="overflow:auto;white-space: normal;">' . implode("\n", $content_parts) . '</pre></details>';
         return $content;
     }
 
