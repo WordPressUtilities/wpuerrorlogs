@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.4.0
+Version: 0.5.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -20,19 +20,13 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.4.0';
+    private $plugin_version = '0.5.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
     );
     private $basetoolbox;
-    private $baseemail;
-    private $basecron;
     private $adminpages;
-    private $baseadmindatas;
-    private $settings;
-    private $settings_obj;
-    private $settings_details;
     private $plugin_description;
 
     public function __construct() {
@@ -45,12 +39,11 @@ class WPUErrorLogs {
             load_muplugin_textdomain('wpuerrorlogs', dirname(plugin_basename(__FILE__)) . '/lang/');
         }
         $this->plugin_description = __('Make sense of your log files', 'wpuerrorlogs');
+
         # TOOLBOX
         require_once __DIR__ . '/inc/WPUBaseToolbox/WPUBaseToolbox.php';
         $this->basetoolbox = new \wpuerrorlogs\WPUBaseToolbox();
-        # EMAIL
-        require_once __DIR__ . '/inc/WPUBaseEmail/WPUBaseEmail.php';
-        $this->baseemail = new \wpuerrorlogs\WPUBaseEmail();
+
         # CUSTOM PAGE
         $admin_pages = array(
             'main' => array(
@@ -67,66 +60,13 @@ class WPUErrorLogs {
         $pages_options = array(
             'id' => $this->plugin_settings['id'],
             'level' => 'manage_options',
+            'network_page' => (defined('MULTISITE') && MULTISITE),
             'basename' => plugin_basename(__FILE__)
         );
         // Init admin page
         require_once __DIR__ . '/inc/WPUBaseAdminPage/WPUBaseAdminPage.php';
         $this->adminpages = new \wpuerrorlogs\WPUBaseAdminPage();
         $this->adminpages->init($pages_options, $admin_pages);
-        # CUSTOM TABLE
-        require_once __DIR__ . '/inc/WPUBaseAdminDatas/WPUBaseAdminDatas.php';
-        $this->baseadmindatas = new \wpuerrorlogs\WPUBaseAdminDatas();
-        $this->baseadmindatas->init(array(
-            'handle_database' => false,
-            'plugin_id' => $this->plugin_settings['id'],
-            'table_name' => 'wpuerrorlogs_logs',
-            'table_fields' => array(
-                'message' => array(
-                    'public_name' => 'message',
-                    'type' => 'sql',
-                    'sql' => 'MEDIUMTEXT'
-                )
-            )
-        ));
-        # SETTINGS
-        $this->settings_details = array(
-            # Admin page
-            'create_page' => false,
-            'plugin_basename' => plugin_basename(__FILE__),
-            # Default
-            'plugin_name' => $this->plugin_settings['name'],
-            'plugin_id' => $this->plugin_settings['id'],
-            'option_id' => $this->plugin_settings['id'] . '_options',
-            'sections' => array(
-                'import' => array(
-                    'name' => __('Import Settings', 'wpuerrorlogs')
-                )
-            )
-        );
-        $this->settings = array(
-            //    'value' => array(
-            //        'label' => __('My Value', 'wpuerrorlogs'),
-            //        'help' => __('A little help.', 'wpuerrorlogs'),
-            //        'type' => 'textarea'
-            //    )
-        );
-        require_once __DIR__ . '/inc/WPUBaseSettings/WPUBaseSettings.php';
-        $this->settings_obj = new \wpuerrorlogs\WPUBaseSettings($this->settings_details, $this->settings);
-        /* Include hooks */
-        require_once __DIR__ . '/inc/WPUBaseCron/WPUBaseCron.php';
-        $this->basecron = new \wpuerrorlogs\WPUBaseCron(array(
-            'pluginname' => $this->plugin_settings['name'],
-            'cronhook' => 'wpuerrorlogs__cron_hook',
-            'croninterval' => 3600
-        ));
-        /* Callback when hook is triggered by the cron */
-        add_action('wpuerrorlogs__cron_hook', array(&$this,
-            'wpuerrorlogs__cron_hook'
-        ), 10);
-    }
-
-    public function wpuerrorlogs__cron_hook() {
-
     }
 
     public function page_content__main() {
