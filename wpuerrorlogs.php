@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.5.2
+Version: 0.5.3
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.5.2';
+    private $plugin_version = '0.5.3';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -40,6 +40,13 @@ class WPUErrorLogs {
             load_muplugin_textdomain('wpuerrorlogs', dirname(plugin_basename(__FILE__)) . '/lang/');
         }
         $this->plugin_description = __('Make sense of your log files', 'wpuerrorlogs');
+
+        # UPDATE
+        require_once __DIR__ . '/inc/WPUBaseUpdate/WPUBaseUpdate.php';
+        $this->settings_update = new \wpuerrorlogs\WPUBaseUpdate(
+            'WordPressUtilities',
+            'wpuerrorlogs',
+            $this->plugin_version);
 
         # TOOLBOX
         require_once __DIR__ . '/inc/WPUBaseToolbox/WPUBaseToolbox.php';
