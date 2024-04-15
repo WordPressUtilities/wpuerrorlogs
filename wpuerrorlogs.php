@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.5.1
+Version: 0.5.2
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.5.1';
+    private $plugin_version = '0.5.2';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -222,7 +222,7 @@ class WPUErrorLogs {
         foreach ($lines as $line) {
 
             /* Is it a new error */
-            if (substr($line, 0, 1) == '[' && preg_match('/^\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} UTC\]/', $line, $matches)) {
+            if (substr($line, 0, 1) == '[' && preg_match('/^\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Za-z\/]+\]/', $line, $matches)) {
                 if (!empty($currentError)) {
                     $currentError['text'] = $this->minimize_error_text($currentError['text']);
                     $errors[] = $currentError;
