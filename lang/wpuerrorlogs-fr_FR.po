@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2024-02-25 21:31+0100\n"
+"POT-Creation-Date: 2024-04-16 22:55+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -11,51 +11,67 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: ..\n"
-"X-Poedit-KeywordsList: __;_x;_e\n"
+"X-Poedit-KeywordsList: __;_x;_e;_n\n"
 "X-Generator: Poedit 3.4.2\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: inc\n"
 
-#: wpuerrorlogs.php:47
+#: wpuerrorlogs.php:44
 msgid "Make sense of your log files"
 msgstr "Donnez un sens à vos fichiers logs"
 
-#: wpuerrorlogs.php:61
+#: wpuerrorlogs.php:64
 msgid "Settings"
 msgstr "Réglages"
 
 #: wpuerrorlogs.php:102
-msgid "Import Settings"
-msgstr "Paramètres d'importation"
-
-#: wpuerrorlogs.php:150
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:151
+#: wpuerrorlogs.php:103
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:152
+#: wpuerrorlogs.php:104
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:153
+#: wpuerrorlogs.php:105
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:158
+#: wpuerrorlogs.php:109
+msgid "Check the last :"
+msgstr "Vérifiez les derniers :"
+
+#: wpuerrorlogs.php:112
+msgid "1 day"
+msgstr "1 jour"
+
+#: wpuerrorlogs.php:112
+#, php-format
+msgid "%s days"
+msgstr "%s jours"
+
+#: wpuerrorlogs.php:118
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:164 wpuerrorlogs.php:174
+#: wpuerrorlogs.php:124 wpuerrorlogs.php:134
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:168
+#: wpuerrorlogs.php:128
 msgid "Latest errors"
 msgstr "Dernières erreurs"
 
-#: wpuerrorlogs.php:338
+#: wpuerrorlogs.php:147
+msgid "Latest fatal errors"
+msgstr "Dernières erreurs fatales"
+
+#: wpuerrorlogs.php:342
 msgid "Full error"
 msgstr "Erreur complète"
+
+#~ msgid "Import Settings"
+#~ msgstr "Paramètres d'importation"

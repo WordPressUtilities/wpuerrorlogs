@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.5.3
+Version: 0.6.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -21,7 +21,9 @@ if (!defined('ABSPATH')) {
 }
 
 class WPUErrorLogs {
-    private $plugin_version = '0.5.3';
+    public $settings_update;
+    private $number_of_days = 10;
+    private $plugin_version = '0.6.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -75,6 +77,9 @@ class WPUErrorLogs {
         require_once __DIR__ . '/inc/WPUBaseAdminPage/WPUBaseAdminPage.php';
         $this->adminpages = new \wpuerrorlogs\WPUBaseAdminPage();
         $this->adminpages->init($pages_options, $admin_pages);
+
+        # HOOKS
+        $this->number_of_days = apply_filters('wpuerrorlogs__number_of_days', $this->number_of_days);
     }
 
     public function page_content__main() {
@@ -85,13 +90,12 @@ class WPUErrorLogs {
             return;
         }
 
-        $errors = $this->get_logs();
+        $number_of_days = $this->number_of_days;
+        if (isset($_GET['number_of_days']) && is_numeric($_GET['number_of_days']) && $_GET['number_of_days'] <= $this->number_of_days) {
+            $number_of_days = intval($_GET['number_of_days']);
+        }
 
-        /* Prepare for display */
-        $errors = array_map(function ($item) {
-            $item['text'] = $this->display_content_with_toggle($item['text']);
-            return $item;
-        }, $errors);
+        $errors = $this->get_logs($number_of_days);
 
         /* Keep only first five and extract data */
         $colnames = array(
@@ -100,6 +104,14 @@ class WPUErrorLogs {
             'type' => __('Type', 'wpuerrorlogs'),
             'text' => __('Text', 'wpuerrorlogs')
         );
+
+        /* Select number of days */
+        echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label> ';
+        echo '<select id="wpuerrorlogs_switch_day" onchange="document.location.href=\'' . $this->adminpages->get_page_url('main') . '&number_of_days=\' + this.value;">';
+        for ($i = $this->number_of_days; $i > 0; $i--) {
+            echo '<option value="' . $i . '"' . ($number_of_days == $i ? ' selected' : '') . '>' . ($i < 2 ? __('1 day', 'wpuerrorlogs') : sprintf(__('%s days','wpuerrorlogs'), $i)) . '</option>';
+        }
+        echo '</select>';
 
         /* Top errors */
         $top_errors = $this->sort_errors_by_top($errors, 10);
@@ -120,6 +132,21 @@ class WPUErrorLogs {
             'colnames' => $colnames
         ));
         echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
+
+        /* Latest by type */
+        $fatal_errors = array_filter($errors, function ($item) {
+            return $item['type'] == 'php-fatal';
+        });
+        $latest_fatal_errors = $this->sort_errors_by_latest($fatal_errors, 10);
+        $html_errors = $this->basetoolbox->array_to_html_table($latest_fatal_errors, array(
+            'table_classname' => 'widefat striped',
+            'htmlspecialchars_td' => false,
+            'colnames' => $colnames
+        ));
+        if ($html_errors) {
+            echo '<h2>' . __('Latest fatal errors', 'wpuerrorlogs') . '</h2>';
+            echo $html_errors;
+        }
 
     }
 
@@ -146,6 +173,7 @@ class WPUErrorLogs {
                 'text' => $this->expand_error_text($text)
             );
         }
+        $top_errors = $this->prepare_errors_for_display($top_errors);
         return $top_errors;
     }
 
@@ -154,16 +182,27 @@ class WPUErrorLogs {
         foreach ($latest_errors as $i => $error) {
             $latest_errors[$i]['text'] = $this->expand_error_text($error['text']);
         }
+        /* Reset keys */
+        $latest_errors = array_values($latest_errors);
+        $latest_errors = $this->prepare_errors_for_display($latest_errors);
         return $latest_errors;
+    }
+
+    function prepare_errors_for_display($errors) {
+        /* Prepare for display */
+        $errors = array_map(function ($item) {
+            $item['text'] = $this->display_content_with_toggle($item['text']);
+            return $item;
+        }, $errors);
+        return $errors;
     }
 
     /* ----------------------------------------------------------
       Extract logs from file
     ---------------------------------------------------------- */
 
-    function get_logs() {
+    function get_logs($number_of_days) {
 
-        $number_of_days = 5;
         $previous_files = array();
 
         /* Try to obtain previous files */
