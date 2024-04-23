@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.7.0
+Version: 0.8.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.7.0';
+    private $plugin_version = '0.8.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -64,6 +64,9 @@ class WPUErrorLogs {
                 'settings_name' => __('Settings', 'wpuerrorlogs'),
                 'function_content' => array(&$this,
                     'page_content__main'
+                ),
+                'function_action' => array(&$this,
+                    'page_action__main'
                 )
             )
         );
@@ -95,7 +98,15 @@ class WPUErrorLogs {
             $number_of_days = intval($_GET['number_of_days']);
         }
 
-        $errors = $this->get_logs($number_of_days);
+        $search = '';
+        if (isset($_GET['s'])) {
+            $search = stripslashes(stripslashes($_GET['s']));
+        }
+
+        $errors = $this->get_logs(array(
+            'number_of_days' => $number_of_days,
+            'search_string' => $search
+        ));
 
         /* Keep only first five and extract data */
         $colnames = array(
@@ -105,13 +116,28 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
+        echo '<details>';
+        echo '<summary>' . __('Filter results', 'wpuerrorlogs') . '</summary>';
+
         /* Select number of days */
-        echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label> ';
-        echo '<select id="wpuerrorlogs_switch_day" onchange="document.location.href=\'' . $this->adminpages->get_page_url('main') . '&number_of_days=\' + this.value;">';
+        echo '<p>';
+        echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label><br />';
+        echo '<select name="number_of_days" id="wpuerrorlogs_switch_day" onchange="document.location.href=\'' . $this->adminpages->get_page_url('main') . '&number_of_days=\' + this.value;">';
         for ($i = $this->number_of_days; $i > 0; $i--) {
             echo '<option value="' . $i . '"' . ($number_of_days == $i ? ' selected' : '') . '>' . ($i < 2 ? __('1 day', 'wpuerrorlogs') : sprintf(__('%s days', 'wpuerrorlogs'), $i)) . '</option>';
         }
         echo '</select>';
+        echo '</p>';
+
+        /* Search bar */
+        echo '<p>';
+        echo '<label>' . __('Search in errors', 'wpuerrorlogs') . '</label><br />';
+        echo '<input name="wpuerrorlogs_search" type="search" placeholder="' . __('Search', 'wpuerrorlogs') . '" value="' . htmlentities($search) . '" id="wpuerrorlogs_search" />';
+        echo '</p>';
+
+        submit_button(__('Filter results', 'wpuerrorlogs'));
+
+        echo '</details>';
 
         /* Top errors */
         $top_errors = $this->sort_errors_by_top($errors, 10);
@@ -148,6 +174,19 @@ class WPUErrorLogs {
             echo $html_errors;
         }
 
+    }
+
+    function page_action__main() {
+        $new_url = $this->adminpages->get_page_url('main');
+        if (isset($_POST['number_of_days'])) {
+            $new_url = add_query_arg('number_of_days', urlencode($_POST['number_of_days']), $new_url);
+        }
+        if (isset($_POST['wpuerrorlogs_search'])) {
+            $new_url = add_query_arg('s', urlencode($_POST['wpuerrorlogs_search']), $new_url);
+        }
+
+        wp_redirect($new_url);
+        die;
     }
 
     /* ----------------------------------------------------------
@@ -201,7 +240,30 @@ class WPUErrorLogs {
       Extract logs from file
     ---------------------------------------------------------- */
 
-    function get_logs($number_of_days) {
+    function get_logs($args = array()) {
+        $args = wp_parse_args($args, array(
+            'number_of_days' => 5,
+            'search_string' => ''
+        ));
+
+        $excluded_strings = array();
+        $included_strings = array();
+
+        $args['search_string'] = str_replace('-"', '"-', $args['search_string']);
+        $search_parts = explode('"', $args['search_string']);
+        $search_parts = array_map(function ($a) {
+            return str_replace('"', '', $a);
+        }, $search_parts);
+        if (!empty($search_parts)) {
+            $search_parts = array_filter($search_parts);
+            foreach ($search_parts as $search_part) {
+                if (substr($search_part, 0, 1) == '-') {
+                    $excluded_strings[] = trim(substr($search_part, 1));
+                } else {
+                    $included_strings[] = trim($search_part);
+                }
+            }
+        }
 
         $previous_files = array();
 
@@ -217,7 +279,7 @@ class WPUErrorLogs {
                 arsort($previous_files);
                 if (isset($previous_files[0])) {
                     $file = array_shift($previous_files);
-                    $previous_files = array_slice($previous_files, 0, $number_of_days);
+                    $previous_files = array_slice($previous_files, 0, $args['number_of_days']);
                 }
             }
         }
@@ -225,16 +287,24 @@ class WPUErrorLogs {
             return array();
         }
 
-        $max_date = time() - 86400 * $number_of_days;
+        $max_date = time() - 86400 * $args['number_of_days'];
 
         /* Parse errors in files */
-        $errors = $this->get_logs_from_file($file, $max_date);
+        $errors = $this->get_logs_from_file($file, array(
+            'max_date' => $max_date,
+            'included_strings' => $included_strings,
+            'excluded_strings' => $excluded_strings
+        ));
         if (empty($previous_files)) {
-            $previous_files = $this->find_previous_log_files($file, $number_of_days);
+            $previous_files = $this->find_previous_log_files($file, $args['number_of_days']);
         }
 
         foreach ($previous_files as $previous_file) {
-            $errors_previous = $this->get_logs_from_file($previous_file, $max_date);
+            $errors_previous = $this->get_logs_from_file($previous_file, array(
+                'max_date' => $max_date,
+                'included_strings' => $included_strings,
+                'excluded_strings' => $excluded_strings
+            ));
             foreach ($errors_previous as $error) {
                 $errors[] = $error;
             }
@@ -262,7 +332,13 @@ class WPUErrorLogs {
         return $previous_files;
     }
 
-    function get_logs_from_file($file, $max_date) {
+    function get_logs_from_file($file, $args = array()) {
+
+        $args = wp_parse_args($args, array(
+            'max_date' => time(),
+            'included_strings' => array(),
+            'excluded_strings' => array()
+        ));
 
         $lines = array_reverse(file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
         $errors = [];
@@ -285,7 +361,7 @@ class WPUErrorLogs {
                 /* If date is not ok */
                 if (isset($matches[0])) {
                     $time = strtotime(str_replace(array('[', ']'), '', $matches[0]));
-                    if ($time < $max_date) {
+                    if ($time < $args['max_date']) {
                         break;
                     }
                 }
@@ -293,13 +369,19 @@ class WPUErrorLogs {
                 if ($currentError['date'] == 'none' && !empty($currentError['text'])) {
                     $line_error['text'] = array_merge($currentError['text'], $line_error['text']);
                     $line_error['text'] = $this->minimize_error_text(implode("\n", array_reverse($line_error['text'])));
-                    $errors[] = $line_error;
+                    $line_error = $this->filter_visible_error($line_error, $args);
+                    if ($line_error) {
+                        $errors[] = $line_error;
+                    }
                     $currentError = $default_error;
                     continue;
                 }
 
                 $line_error['text'] = implode('', $line_error['text']);
-                $errors[] = $line_error;
+                $line_error = $this->filter_visible_error($line_error, $args);
+                if ($line_error) {
+                    $errors[] = $line_error;
+                }
 
             } else {
                 $currentError['text'][] = $line;
@@ -308,10 +390,32 @@ class WPUErrorLogs {
 
         if (!empty($currentError) && is_array($currentError['text']) && !empty($currentError['text'])) {
             $currentError['text'] = $this->minimize_error_text(implode("\n", array_reverse($currentError['text'])));
-            $errors[] = $currentError;
+            $currentError = $this->filter_visible_error($currentError, $args);
+            if ($currentError) {
+                $errors[] = $currentError;
+            }
         }
 
         return $errors;
+    }
+
+    function filter_visible_error($error, $args) {
+        if (!empty($args['included_strings'])) {
+            foreach ($args['included_strings'] as $included_string) {
+                if (strpos($error['text'], $included_string) === false) {
+                    return false;
+                }
+            }
+        }
+        if (!empty($args['excluded_strings'])) {
+            foreach ($args['excluded_strings'] as $excluded_string) {
+                if (strpos($error['text'], $excluded_string) !== false) {
+                    return false;
+                }
+            }
+        }
+
+        return $error;
     }
 
     function get_error_from_line($line) {

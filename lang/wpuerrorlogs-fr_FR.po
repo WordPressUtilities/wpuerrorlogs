@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2024-04-16 22:55+0200\n"
+"POT-Creation-Date: 2024-04-23 17:14+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -24,52 +24,64 @@ msgstr "Donnez un sens à vos fichiers logs"
 msgid "Settings"
 msgstr "Réglages"
 
-#: wpuerrorlogs.php:102
+#: wpuerrorlogs.php:113
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:103
+#: wpuerrorlogs.php:114
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:104
+#: wpuerrorlogs.php:115
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:105
+#: wpuerrorlogs.php:116
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:109
+#: wpuerrorlogs.php:120 wpuerrorlogs.php:138
+msgid "Filter results"
+msgstr "Filtrer les résultats"
+
+#: wpuerrorlogs.php:124
 msgid "Check the last :"
 msgstr "Vérifiez les derniers :"
 
-#: wpuerrorlogs.php:112
+#: wpuerrorlogs.php:127
 msgid "1 day"
 msgstr "1 jour"
 
-#: wpuerrorlogs.php:112
+#: wpuerrorlogs.php:127
 #, php-format
 msgid "%s days"
 msgstr "%s jours"
 
-#: wpuerrorlogs.php:118
+#: wpuerrorlogs.php:134
+msgid "Search in errors"
+msgstr "Rechercher dans les erreurs"
+
+#: wpuerrorlogs.php:135
+msgid "Search"
+msgstr "Rechercher"
+
+#: wpuerrorlogs.php:144
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:124 wpuerrorlogs.php:134
+#: wpuerrorlogs.php:150 wpuerrorlogs.php:160
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:128
+#: wpuerrorlogs.php:154
 msgid "Latest errors"
 msgstr "Dernières erreurs"
 
-#: wpuerrorlogs.php:147
+#: wpuerrorlogs.php:173
 msgid "Latest fatal errors"
 msgstr "Dernières erreurs fatales"
 
-#: wpuerrorlogs.php:342
+#: wpuerrorlogs.php:464
 msgid "Full error"
 msgstr "Erreur complète"
 
