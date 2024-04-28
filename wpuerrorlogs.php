@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.8.0
+Version: 0.8.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.8.0';
+    private $plugin_version = '0.8.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -116,17 +116,18 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
-        echo '<details>';
+        echo '<details ' . ($search || isset($_GET['has_action']) ? 'open' : '') . '>';
         echo '<summary>' . __('Filter results', 'wpuerrorlogs') . '</summary>';
 
         /* Select number of days */
         echo '<p>';
         echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label><br />';
-        echo '<select name="number_of_days" id="wpuerrorlogs_switch_day" onchange="document.location.href=\'' . $this->adminpages->get_page_url('main') . '&number_of_days=\' + this.value;">';
+        echo '<select name="number_of_days" id="wpuerrorlogs_switch_day">';
         for ($i = $this->number_of_days; $i > 0; $i--) {
             echo '<option value="' . $i . '"' . ($number_of_days == $i ? ' selected' : '') . '>' . ($i < 2 ? __('1 day', 'wpuerrorlogs') : sprintf(__('%s days', 'wpuerrorlogs'), $i)) . '</option>';
         }
         echo '</select>';
+        echo '<input type="hidden" name="wpuerrorlogs_search_action" value="1">';
         echo '</p>';
 
         /* Search bar */
@@ -183,6 +184,9 @@ class WPUErrorLogs {
         }
         if (isset($_POST['wpuerrorlogs_search'])) {
             $new_url = add_query_arg('s', urlencode($_POST['wpuerrorlogs_search']), $new_url);
+        }
+        if (isset($_POST['wpuerrorlogs_search_action'])) {
+            $new_url = add_query_arg('has_action', 1, $new_url);
         }
 
         wp_redirect($new_url);
