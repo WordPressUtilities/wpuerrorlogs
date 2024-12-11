@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2024-04-23 17:14+0200\n"
+"POT-Creation-Date: 2024-12-11 11:04+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -12,76 +12,76 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_x;_e;_n\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.5\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: inc\n"
 
-#: wpuerrorlogs.php:44
+#: wpuerrorlogs.php:48
 msgid "Make sense of your log files"
 msgstr "Donnez un sens à vos fichiers logs"
 
-#: wpuerrorlogs.php:64
+#: wpuerrorlogs.php:71
 msgid "Settings"
 msgstr "Réglages"
 
-#: wpuerrorlogs.php:113
+#: wpuerrorlogs.php:120
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:114
+#: wpuerrorlogs.php:121
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:115
+#: wpuerrorlogs.php:122
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:116
+#: wpuerrorlogs.php:123
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:120 wpuerrorlogs.php:138
+#: wpuerrorlogs.php:127 wpuerrorlogs.php:146
 msgid "Filter results"
 msgstr "Filtrer les résultats"
 
-#: wpuerrorlogs.php:124
+#: wpuerrorlogs.php:131
 msgid "Check the last :"
 msgstr "Vérifiez les derniers :"
 
-#: wpuerrorlogs.php:127
+#: wpuerrorlogs.php:134
 msgid "1 day"
 msgstr "1 jour"
 
-#: wpuerrorlogs.php:127
+#: wpuerrorlogs.php:134
 #, php-format
 msgid "%s days"
 msgstr "%s jours"
 
-#: wpuerrorlogs.php:134
+#: wpuerrorlogs.php:142
 msgid "Search in errors"
 msgstr "Rechercher dans les erreurs"
 
-#: wpuerrorlogs.php:135
+#: wpuerrorlogs.php:143
 msgid "Search"
 msgstr "Rechercher"
 
-#: wpuerrorlogs.php:144
+#: wpuerrorlogs.php:152
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:150 wpuerrorlogs.php:160
+#: wpuerrorlogs.php:158 wpuerrorlogs.php:168
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:154
+#: wpuerrorlogs.php:162
 msgid "Latest errors"
 msgstr "Dernières erreurs"
 
-#: wpuerrorlogs.php:173
+#: wpuerrorlogs.php:181
 msgid "Latest fatal errors"
 msgstr "Dernières erreurs fatales"
 
-#: wpuerrorlogs.php:464
+#: wpuerrorlogs.php:480
 msgid "Full error"
 msgstr "Erreur complète"
 

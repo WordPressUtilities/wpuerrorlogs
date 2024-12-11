@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.8.1
+Version: 0.9.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.8.1';
+    private $plugin_version = '0.9.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -33,15 +33,22 @@ class WPUErrorLogs {
     private $plugin_description;
 
     public function __construct() {
-        add_action('plugins_loaded', array(&$this, 'plugins_loaded'));
+        add_action('init', array(&$this, 'load_translation'));
+        add_action('init', array(&$this, 'init'));
     }
 
-    public function plugins_loaded() {
+    public function load_translation() {
         # TRANSLATION
-        if (!load_plugin_textdomain('wpuerrorlogs', false, dirname(plugin_basename(__FILE__)) . '/lang/')) {
-            load_muplugin_textdomain('wpuerrorlogs', dirname(plugin_basename(__FILE__)) . '/lang/');
+        $lang_dir = dirname(plugin_basename(__FILE__)) . '/lang/';
+        if (strpos(__DIR__, 'mu-plugins') !== false) {
+            load_muplugin_textdomain('wpuerrorlogs', $lang_dir);
+        } else {
+            load_plugin_textdomain('wpuerrorlogs', false, $lang_dir);
         }
         $this->plugin_description = __('Make sense of your log files', 'wpuerrorlogs');
+    }
+
+    public function init() {
 
         # UPDATE
         require_once __DIR__ . '/inc/WPUBaseUpdate/WPUBaseUpdate.php';
@@ -177,7 +184,7 @@ class WPUErrorLogs {
 
     }
 
-    function page_action__main() {
+    public function page_action__main() {
         $new_url = $this->adminpages->get_page_url('main');
         if (isset($_POST['number_of_days'])) {
             $new_url = add_query_arg('number_of_days', urlencode($_POST['number_of_days']), $new_url);
@@ -197,7 +204,7 @@ class WPUErrorLogs {
       Sort errors
     ---------------------------------------------------------- */
 
-    function sort_errors_by_top($errors, $max_number = 5) {
+    public function sort_errors_by_top($errors, $max_number = 5) {
         $top_errors_raw = [];
         foreach ($errors as $error) {
             if (!isset($top_errors_raw[$error['text']])) {
@@ -220,7 +227,7 @@ class WPUErrorLogs {
         return $top_errors;
     }
 
-    function sort_errors_by_latest($errors, $max_number = 5) {
+    public function sort_errors_by_latest($errors, $max_number = 5) {
         $latest_errors = array_slice($errors, 0, $max_number, true);
         foreach ($latest_errors as $i => $error) {
             $latest_errors[$i]['text'] = $this->expand_error_text($error['text']);
@@ -231,7 +238,7 @@ class WPUErrorLogs {
         return $latest_errors;
     }
 
-    function prepare_errors_for_display($errors) {
+    public function prepare_errors_for_display($errors) {
         /* Prepare for display */
         $errors = array_map(function ($item) {
             $item['text'] = $this->display_content_with_toggle($item['text']);
@@ -244,7 +251,7 @@ class WPUErrorLogs {
       Extract logs from file
     ---------------------------------------------------------- */
 
-    function get_logs($args = array()) {
+    public function get_logs($args = array()) {
         $args = wp_parse_args($args, array(
             'number_of_days' => 5,
             'search_string' => ''
@@ -316,7 +323,7 @@ class WPUErrorLogs {
         return $errors;
     }
 
-    function find_previous_log_files($file, $number_of_days = 5) {
+    public function find_previous_log_files($file, $number_of_days = 5) {
         $date_formats = array('Ymd', 'dmY');
         $previous_files = array();
         foreach ($date_formats as $date_format) {
@@ -336,7 +343,7 @@ class WPUErrorLogs {
         return $previous_files;
     }
 
-    function get_logs_from_file($file, $args = array()) {
+    public function get_logs_from_file($file, $args = array()) {
 
         $args = wp_parse_args($args, array(
             'max_date' => time(),
@@ -403,7 +410,7 @@ class WPUErrorLogs {
         return $errors;
     }
 
-    function filter_visible_error($error, $args) {
+    public function filter_visible_error($error, $args) {
         if (!empty($args['included_strings'])) {
             foreach ($args['included_strings'] as $included_string) {
                 if (strpos($error['text'], $included_string) === false) {
@@ -422,7 +429,7 @@ class WPUErrorLogs {
         return $error;
     }
 
-    function get_error_from_line($line) {
+    public function get_error_from_line($line) {
         /* Extract values */
         $date_parts = explode(']', $line);
         $date = str_replace('[', '', $date_parts[0]);
@@ -462,7 +469,7 @@ class WPUErrorLogs {
     /* Display content
     -------------------------- */
 
-    function display_content_with_toggle($content) {
+    public function display_content_with_toggle($content) {
         $content = strip_tags($content);
         $content_parts = explode("\n", $content);
         $minimized_error = str_replace(ABSPATH, '', $content_parts[0]);
@@ -477,14 +484,14 @@ class WPUErrorLogs {
     /* Minimize text
     -------------------------- */
 
-    function minimize_get_correspondances() {
+    public function minimize_get_correspondances() {
         return array(
             'abs' => ABSPATH,
             'plug' => 'wp-content/plugins/'
         );
     }
 
-    function expand_error_text($text) {
+    public function expand_error_text($text) {
         $correspondances = $this->minimize_get_correspondances();
         foreach ($correspondances as $min => $max) {
             $text = str_replace('#!' . $min . '!#', $max, $text);
@@ -492,7 +499,7 @@ class WPUErrorLogs {
         return $text;
     }
 
-    function minimize_error_text($text) {
+    public function minimize_error_text($text) {
         $correspondances = $this->minimize_get_correspondances();
         foreach ($correspondances as $min => $max) {
             $text = str_replace($max, '#!' . $min . '!#', $text);
