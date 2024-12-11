@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.9.0
+Version: 0.9.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.9.0';
+    private $plugin_version = '0.9.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -59,7 +59,10 @@ class WPUErrorLogs {
 
         # TOOLBOX
         require_once __DIR__ . '/inc/WPUBaseToolbox/WPUBaseToolbox.php';
-        $this->basetoolbox = new \wpuerrorlogs\WPUBaseToolbox();
+        $this->basetoolbox = new \wpuerrorlogs\WPUBaseToolbox(array(
+            'plugin_name' => $this->plugin_settings['name'],
+            'need_form_js' => false
+        ));
 
         # CUSTOM PAGE
         $admin_pages = array(
