@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.9.1
+Version: 0.10.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.9.1';
+    private $plugin_version = '0.10.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -35,6 +35,7 @@ class WPUErrorLogs {
     public function __construct() {
         add_action('init', array(&$this, 'load_translation'));
         add_action('init', array(&$this, 'init'));
+        add_action('admin_enqueue_scripts', array(&$this, 'admin_enqueue_scripts'));
     }
 
     public function load_translation() {
@@ -185,6 +186,20 @@ class WPUErrorLogs {
             echo $html_errors;
         }
 
+        $errors_by_hour = $this->sort_errors_by_hour($errors);
+        if ($errors_by_hour) {
+            echo '<h2>' . __('Errors by hour', 'wpuerrorlogs') . '</h2>';
+            echo '<script>var wpuerrorlogs_errors_by_hour = ' . json_encode($errors_by_hour) . ';</script>';
+            echo '<canvas id="wuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
+        }
+    }
+
+    public function admin_enqueue_scripts() {
+        if (!isset($_GET['page']) || $_GET['page'] != $this->plugin_settings['id'] . '-main') {
+            return;
+        }
+        wp_enqueue_script('wpuerrorlogs_charts', plugins_url('assets/chart.js', __FILE__), array('jquery'), $this->plugin_version);
+        wp_enqueue_script('wpuerrorlogs_admin', plugins_url('assets/admin.js', __FILE__), array('wpuerrorlogs_charts'), $this->plugin_version);
     }
 
     public function page_action__main() {
@@ -248,6 +263,25 @@ class WPUErrorLogs {
             return $item;
         }, $errors);
         return $errors;
+    }
+
+    public function sort_errors_by_hour($errors) {
+        if (!$errors) {
+            return array();
+        }
+        $errors_by_hour = array();
+        for ($i = 0; $i < 24; $i++) {
+            $errors_by_hour[$i] = 0;
+        }
+        foreach ($errors as $error) {
+            $hour = date('H', strtotime($error['date']));
+            if (!isset($errors_by_hour[$hour])) {
+                $errors_by_hour[$hour] = 0;
+            }
+            $errors_by_hour[$hour]++;
+        }
+        ksort($errors_by_hour, SORT_NATURAL);
+        return $errors_by_hour;
     }
 
     /* ----------------------------------------------------------
@@ -473,7 +507,7 @@ class WPUErrorLogs {
     -------------------------- */
 
     public function display_content_with_toggle($content) {
-        $content = strip_tags($content);
+        $content = wp_strip_all_tags($content);
         $content_parts = explode("\n", $content);
         $minimized_error = str_replace(ABSPATH, '', $content_parts[0]);
         if ($minimized_error == $content) {

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2024-12-11 11:04+0100\n"
+"POT-Creation-Date: 2025-01-02 21:42+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,72 +16,76 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: inc\n"
 
-#: wpuerrorlogs.php:48
+#: wpuerrorlogs.php:49
 msgid "Make sense of your log files"
 msgstr "Donnez un sens à vos fichiers logs"
 
-#: wpuerrorlogs.php:71
+#: wpuerrorlogs.php:75
 msgid "Settings"
 msgstr "Réglages"
 
-#: wpuerrorlogs.php:120
+#: wpuerrorlogs.php:124
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:121
+#: wpuerrorlogs.php:125
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:122
+#: wpuerrorlogs.php:126
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:123
+#: wpuerrorlogs.php:127
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:127 wpuerrorlogs.php:146
+#: wpuerrorlogs.php:131 wpuerrorlogs.php:150
 msgid "Filter results"
 msgstr "Filtrer les résultats"
 
-#: wpuerrorlogs.php:131
+#: wpuerrorlogs.php:135
 msgid "Check the last :"
 msgstr "Vérifiez les derniers :"
 
-#: wpuerrorlogs.php:134
+#: wpuerrorlogs.php:138
 msgid "1 day"
 msgstr "1 jour"
 
-#: wpuerrorlogs.php:134
+#: wpuerrorlogs.php:138
 #, php-format
 msgid "%s days"
 msgstr "%s jours"
 
-#: wpuerrorlogs.php:142
+#: wpuerrorlogs.php:146
 msgid "Search in errors"
 msgstr "Rechercher dans les erreurs"
 
-#: wpuerrorlogs.php:143
+#: wpuerrorlogs.php:147
 msgid "Search"
 msgstr "Rechercher"
 
-#: wpuerrorlogs.php:152
+#: wpuerrorlogs.php:156
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:158 wpuerrorlogs.php:168
+#: wpuerrorlogs.php:162 wpuerrorlogs.php:172
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:162
+#: wpuerrorlogs.php:166
 msgid "Latest errors"
 msgstr "Dernières erreurs"
 
-#: wpuerrorlogs.php:181
+#: wpuerrorlogs.php:185
 msgid "Latest fatal errors"
 msgstr "Dernières erreurs fatales"
 
-#: wpuerrorlogs.php:480
+#: wpuerrorlogs.php:191
+msgid "Errors by hour"
+msgstr "Erreurs par heure"
+
+#: wpuerrorlogs.php:517
 msgid "Full error"
 msgstr "Erreur complète"
 
