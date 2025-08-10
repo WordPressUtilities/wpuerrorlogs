@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.10.0
+Version: 0.10.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.10.0';
+    private $plugin_version = '0.10.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -190,7 +190,7 @@ class WPUErrorLogs {
         if ($errors_by_hour) {
             echo '<h2>' . __('Errors by hour', 'wpuerrorlogs') . '</h2>';
             echo '<script>var wpuerrorlogs_errors_by_hour = ' . json_encode($errors_by_hour) . ';</script>';
-            echo '<canvas id="wuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
+            echo '<canvas id="wpuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
         }
     }
 
@@ -275,6 +275,7 @@ class WPUErrorLogs {
         }
         foreach ($errors as $error) {
             $hour = date('H', strtotime($error['date']));
+            $hour = intval($hour, 10);
             if (!isset($errors_by_hour[$hour])) {
                 $errors_by_hour[$hour] = 0;
             }
@@ -302,7 +303,7 @@ class WPUErrorLogs {
         $search_parts = array_map(function ($a) {
             return str_replace('"', '', $a);
         }, $search_parts);
-        if (!empty($search_parts)) {
+        if ($args['search_string'] && !empty($search_parts)) {
             $search_parts = array_filter($search_parts);
             foreach ($search_parts as $search_part) {
                 if (substr($search_part, 0, 1) == '-') {
@@ -514,7 +515,7 @@ class WPUErrorLogs {
             return $content;
         }
         $content = $minimized_error;
-        $content .= '<details><summary>' . __('Full error', 'wpuerrorlogs') . '</summary><pre style="overflow:auto;white-space: normal;">' . implode("\n", $content_parts) . '</pre></details>';
+        $content .= '<details><summary>' . __('Full error', 'wpuerrorlogs') . '</summary><pre style="overflow:auto;max-width:100%;">' . implode("\n", $content_parts) . '</pre></details>';
         return $content;
     }
 
