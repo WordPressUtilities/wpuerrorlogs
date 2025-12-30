@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.10.1
+Version: 0.11.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.10.1';
+    private $plugin_version = '0.11.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -191,6 +191,36 @@ class WPUErrorLogs {
             echo '<h2>' . __('Errors by hour', 'wpuerrorlogs') . '</h2>';
             echo '<script>var wpuerrorlogs_errors_by_hour = ' . json_encode($errors_by_hour) . ';</script>';
             echo '<canvas id="wpuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
+        }
+
+        /* Debug info */
+        if (is_readable(WP_DEBUG_LOG)) {
+            $file = WP_DEBUG_LOG;
+            echo '<h2>' . __('Info', 'wpuerrorlogs') . '</h2>';
+            echo '<ul>';
+            echo '<li>' . sprintf(__('Current debug log file: %s', 'wpuerrorlogs'), '<code>' . str_replace(ABSPATH, '', $file) . '</code>') . '</li>';
+            echo '<li>' . sprintf(__('File size: %s', 'wpuerrorlogs'), '<code>' . size_format(filesize($file)) . '</code>') . '</li>';
+            echo '<li>' . sprintf(__('Last modified: %s', 'wpuerrorlogs'), '<code>' . date_i18n(get_option('date_format') . ' ' . get_option('time_format'), filemtime($file)) . '</code>') . '</li>';
+            echo '</ul>';
+
+            $dir = dirname($file);
+            $files = array_filter(glob($dir . '/*.log'), function ($a) use ($file) {
+                return $a != $file;
+            });
+            if (!empty($files)) {
+                $html_list = '';
+                $total_size = 0;
+                foreach ($files as $previous_file) {
+                    $size = filesize($previous_file);
+                    $total_size += $size;
+                    $html_list .= '<li><code>' . str_replace(ABSPATH, '', $previous_file) . '</code> (' . size_format($size) . ')</li>';
+                }
+                echo '<details>';
+                echo '<summary>' . __('Previous log files', 'wpuerrorlogs') . '</summary>';
+                echo '<p>' . sprintf(__('Total size of previous log files: %s', 'wpuerrorlogs'), '<code>' . size_format($total_size) . '</code>') . '</p>';
+                echo '<ul>' . $html_list . '</ul>';
+                echo '</details>';
+            }
         }
     }
 

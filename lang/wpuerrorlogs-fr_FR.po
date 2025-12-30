@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2025-01-02 21:42+0100\n"
+"POT-Creation-Date: 2025-12-30 23:05+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -12,7 +12,7 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_x;_e;_n\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.8\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: inc\n"
 
@@ -85,7 +85,35 @@ msgstr "Dernières erreurs fatales"
 msgid "Errors by hour"
 msgstr "Erreurs par heure"
 
-#: wpuerrorlogs.php:517
+#: wpuerrorlogs.php:199
+msgid "Info"
+msgstr "Info"
+
+#: wpuerrorlogs.php:201
+#, php-format
+msgid "Current debug log file: %s"
+msgstr "Fichier journal de débogage actuel : %s"
+
+#: wpuerrorlogs.php:202
+#, php-format
+msgid "File size: %s"
+msgstr "Taille du fichier : %s"
+
+#: wpuerrorlogs.php:203
+#, php-format
+msgid "Last modified: %s"
+msgstr "Dernière modification : %s"
+
+#: wpuerrorlogs.php:219
+msgid "Previous log files"
+msgstr "Fichiers journaux précédents"
+
+#: wpuerrorlogs.php:220
+#, php-format
+msgid "Total size of previous log files: %s"
+msgstr "Taille totale des fichiers journaux précédents : %s"
+
+#: wpuerrorlogs.php:548
 msgid "Full error"
 msgstr "Erreur complète"
 
