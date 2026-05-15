@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WPU Error Logs\n"
-"POT-Creation-Date: 2025-12-30 23:05+0100\n"
+"POT-Creation-Date: 2026-05-15 22:42+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -11,8 +11,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-Basepath: ..\n"
-"X-Poedit-KeywordsList: __;_x;_e;_n\n"
-"X-Generator: Poedit 3.8\n"
+"X-Poedit-KeywordsList: __;_e;_x:1,2c;_n:1,2;esc_attr__;esc_html__;esc_attr_e;esc_html_e\n"
+"X-Generator: Poedit 3.9\n"
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: inc\n"
 
@@ -24,96 +24,113 @@ msgstr "Donnez un sens à vos fichiers logs"
 msgid "Settings"
 msgstr "Réglages"
 
-#: wpuerrorlogs.php:124
+#: wpuerrorlogs.php:85
+msgid "Graphs"
+msgstr "Graphiques"
+
+#: wpuerrorlogs.php:113 wpuerrorlogs.php:283
+msgid "Debug logs are not enabled"
+msgstr "Les journaux de débogage ne sont pas activés"
+
+#: wpuerrorlogs.php:126
 msgid "Count"
 msgstr "Nombre"
 
-#: wpuerrorlogs.php:125
+#: wpuerrorlogs.php:127
 msgid "Date"
 msgstr "Date"
 
-#: wpuerrorlogs.php:126
+#: wpuerrorlogs.php:128
 msgid "Type"
 msgstr "Type"
 
-#: wpuerrorlogs.php:127
+#: wpuerrorlogs.php:129
 msgid "Text"
 msgstr "Texte"
 
-#: wpuerrorlogs.php:131 wpuerrorlogs.php:150
-msgid "Filter results"
-msgstr "Filtrer les résultats"
-
-#: wpuerrorlogs.php:135
-msgid "Check the last :"
-msgstr "Vérifiez les derniers :"
-
-#: wpuerrorlogs.php:138
-msgid "1 day"
-msgstr "1 jour"
-
-#: wpuerrorlogs.php:138
-#, php-format
-msgid "%s days"
-msgstr "%s jours"
-
-#: wpuerrorlogs.php:146
-msgid "Search in errors"
-msgstr "Rechercher dans les erreurs"
-
-#: wpuerrorlogs.php:147
-msgid "Search"
-msgstr "Rechercher"
-
-#: wpuerrorlogs.php:156
+#: wpuerrorlogs.php:136
 msgid "Top errors"
 msgstr "Principales erreurs"
 
-#: wpuerrorlogs.php:162 wpuerrorlogs.php:172
+#: wpuerrorlogs.php:142 wpuerrorlogs.php:152
 msgid "No errors at the moment."
 msgstr "Pas d’erreurs pour le moment."
 
-#: wpuerrorlogs.php:166
+#: wpuerrorlogs.php:146
 msgid "Latest errors"
 msgstr "Dernières erreurs"
 
-#: wpuerrorlogs.php:185
+#: wpuerrorlogs.php:165
 msgid "Latest fatal errors"
 msgstr "Dernières erreurs fatales"
 
-#: wpuerrorlogs.php:191
-msgid "Errors by hour"
-msgstr "Erreurs par heure"
-
-#: wpuerrorlogs.php:199
+#: wpuerrorlogs.php:172
 msgid "Info"
 msgstr "Info"
 
-#: wpuerrorlogs.php:201
+#: wpuerrorlogs.php:174
 #, php-format
 msgid "Current debug log file: %s"
 msgstr "Fichier journal de débogage actuel : %s"
 
-#: wpuerrorlogs.php:202
+#: wpuerrorlogs.php:175
 #, php-format
 msgid "File size: %s"
 msgstr "Taille du fichier : %s"
 
-#: wpuerrorlogs.php:203
+#: wpuerrorlogs.php:176
 #, php-format
 msgid "Last modified: %s"
 msgstr "Dernière modification : %s"
 
-#: wpuerrorlogs.php:219
+#: wpuerrorlogs.php:192
 msgid "Previous log files"
 msgstr "Fichiers journaux précédents"
 
-#: wpuerrorlogs.php:220
+#: wpuerrorlogs.php:193
 #, php-format
 msgid "Total size of previous log files: %s"
 msgstr "Taille totale des fichiers journaux précédents : %s"
 
-#: wpuerrorlogs.php:548
+#: wpuerrorlogs.php:255 wpuerrorlogs.php:274
+msgid "Filter results"
+msgstr "Filtrer les résultats"
+
+#: wpuerrorlogs.php:259
+msgid "Check the last :"
+msgstr "Vérifiez les derniers :"
+
+#: wpuerrorlogs.php:262
+msgid "1 day"
+msgstr "1 jour"
+
+#: wpuerrorlogs.php:262
+#, php-format
+msgid "%s days"
+msgstr "%s jours"
+
+#: wpuerrorlogs.php:270
+msgid "Search in errors"
+msgstr "Rechercher dans les erreurs"
+
+#: wpuerrorlogs.php:271
+msgid "Search"
+msgstr "Rechercher"
+
+#: wpuerrorlogs.php:298
+msgid "Errors by day"
+msgstr "Erreurs par jour"
+
+#: wpuerrorlogs.php:305
+msgid "Errors by hour"
+msgstr "Erreurs par heure"
+
+#: wpuerrorlogs.php:313
+#, php-format
+msgid "Errors hour by hour (last %d days)"
+msgstr "Erreurs heure par heure (au cours des %d derniers jours)"
+
+#: wpuerrorlogs.php:656
 msgid "Full error"
 msgstr "Erreur complète"
 

@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.11.0
+Version: 0.12.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.11.0';
+    private $plugin_version = '0.12.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -79,6 +79,16 @@ class WPUErrorLogs {
                 'function_action' => array(&$this,
                     'page_action__main'
                 )
+            ),
+            'graphs' => array(
+                'parent' => 'main',
+                'name' => __('Graphs', 'wpuerrorlogs'),
+                'function_content' => array(&$this,
+                    'page_content__graphs'
+                ),
+                'function_action' => array(&$this,
+                    'page_action__graphs'
+                )
             )
         );
         $pages_options = array(
@@ -100,20 +110,12 @@ class WPUErrorLogs {
 
         /* Find debug file */
         if (!WP_DEBUG_LOG) {
-            echo 'Debug logs are not enabled';
+            echo __('Debug logs are not enabled', 'wpuerrorlogs');
             return;
         }
 
-        $number_of_days = $this->number_of_days;
-        if (isset($_GET['number_of_days']) && is_numeric($_GET['number_of_days']) && $_GET['number_of_days'] <= $this->number_of_days) {
-            $number_of_days = intval($_GET['number_of_days']);
-        }
-
-        $search = '';
-        if (isset($_GET['s'])) {
-            $search = stripslashes(stripslashes($_GET['s']));
-        }
-
+        $number_of_days = $this->get_request_number_of_days();
+        $search = $this->get_request_search();
         $errors = $this->get_logs(array(
             'number_of_days' => $number_of_days,
             'search_string' => $search
@@ -127,49 +129,27 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
-        echo '<details ' . ($search || isset($_GET['has_action']) ? 'open' : '') . '>';
-        echo '<summary>' . __('Filter results', 'wpuerrorlogs') . '</summary>';
-
-        /* Select number of days */
-        echo '<p>';
-        echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label><br />';
-        echo '<select name="number_of_days" id="wpuerrorlogs_switch_day">';
-        for ($i = $this->number_of_days; $i > 0; $i--) {
-            echo '<option value="' . $i . '"' . ($number_of_days == $i ? ' selected' : '') . '>' . ($i < 2 ? __('1 day', 'wpuerrorlogs') : sprintf(__('%s days', 'wpuerrorlogs'), $i)) . '</option>';
-        }
-        echo '</select>';
-        echo '<input type="hidden" name="wpuerrorlogs_search_action" value="1">';
-        echo '</p>';
-
-        /* Search bar */
-        echo '<p>';
-        echo '<label>' . __('Search in errors', 'wpuerrorlogs') . '</label><br />';
-        echo '<input name="wpuerrorlogs_search" type="search" placeholder="' . __('Search', 'wpuerrorlogs') . '" value="' . htmlentities($search) . '" id="wpuerrorlogs_search" />';
-        echo '</p>';
-
-        submit_button(__('Filter results', 'wpuerrorlogs'));
-
-        echo '</details>';
+        $this->display_filter_form($number_of_days, $search);
 
         /* Top errors */
         $top_errors = $this->sort_errors_by_top($errors, 10);
-        echo '<h2>' . __('Top errors', 'wpuerrorlogs') . '</h2>';
+        echo '<h2>' . esc_html__('Top errors', 'wpuerrorlogs') . '</h2>';
         $html_errors = $this->basetoolbox->array_to_html_table($top_errors, array(
             'table_classname' => 'widefat striped',
             'htmlspecialchars_td' => false,
             'colnames' => $colnames
         ));
-        echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
+        echo $html_errors ? $html_errors : wpautop(__('No errors at the moment.', 'wpuerrorlogs'));
 
         /* Latest errors */
         $latest_errors = $this->sort_errors_by_latest($errors, 10);
-        echo '<h2>' . __('Latest errors', 'wpuerrorlogs') . '</h2>';
+        echo '<h2>' . esc_html__('Latest errors', 'wpuerrorlogs') . '</h2>';
         $html_errors = $this->basetoolbox->array_to_html_table($latest_errors, array(
             'table_classname' => 'widefat striped',
             'htmlspecialchars_td' => false,
             'colnames' => $colnames
         ));
-        echo $html_errors ? $html_errors : '<p>' . __('No errors at the moment.', 'wpuerrorlogs') . '</p>';
+        echo $html_errors ? $html_errors : wpautop(__('No errors at the moment.', 'wpuerrorlogs'));
 
         /* Latest by type */
         $fatal_errors = array_filter($errors, function ($item) {
@@ -182,21 +162,14 @@ class WPUErrorLogs {
             'colnames' => $colnames
         ));
         if ($html_errors) {
-            echo '<h2>' . __('Latest fatal errors', 'wpuerrorlogs') . '</h2>';
+            echo '<h2>' . esc_html__('Latest fatal errors', 'wpuerrorlogs') . '</h2>';
             echo $html_errors;
-        }
-
-        $errors_by_hour = $this->sort_errors_by_hour($errors);
-        if ($errors_by_hour) {
-            echo '<h2>' . __('Errors by hour', 'wpuerrorlogs') . '</h2>';
-            echo '<script>var wpuerrorlogs_errors_by_hour = ' . json_encode($errors_by_hour) . ';</script>';
-            echo '<canvas id="wpuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
         }
 
         /* Debug info */
         if (is_readable(WP_DEBUG_LOG)) {
             $file = WP_DEBUG_LOG;
-            echo '<h2>' . __('Info', 'wpuerrorlogs') . '</h2>';
+            echo '<h2>' . esc_html__('Info', 'wpuerrorlogs') . '</h2>';
             echo '<ul>';
             echo '<li>' . sprintf(__('Current debug log file: %s', 'wpuerrorlogs'), '<code>' . str_replace(ABSPATH, '', $file) . '</code>') . '</li>';
             echo '<li>' . sprintf(__('File size: %s', 'wpuerrorlogs'), '<code>' . size_format(filesize($file)) . '</code>') . '</li>';
@@ -225,7 +198,7 @@ class WPUErrorLogs {
     }
 
     public function admin_enqueue_scripts() {
-        if (!isset($_GET['page']) || $_GET['page'] != $this->plugin_settings['id'] . '-main') {
+        if (!isset($_GET['page']) || strpos($_GET['page'], $this->plugin_settings['id'] . '-') !== 0) {
             return;
         }
         wp_enqueue_script('wpuerrorlogs_charts', plugins_url('assets/chart.js', __FILE__), array('jquery'), $this->plugin_version);
@@ -233,12 +206,22 @@ class WPUErrorLogs {
     }
 
     public function page_action__main() {
-        $new_url = $this->adminpages->get_page_url('main');
+        $this->page_action_filter_redirect('main');
+    }
+
+    public function page_action__graphs() {
+        $this->page_action_filter_redirect('graphs');
+    }
+
+    public function page_action_filter_redirect($page_id) {
+        $new_url = $this->adminpages->get_page_url($page_id);
         if (isset($_POST['number_of_days'])) {
-            $new_url = add_query_arg('number_of_days', urlencode($_POST['number_of_days']), $new_url);
+            $number_of_days = intval($_POST['number_of_days']);
+            $new_url = add_query_arg('number_of_days', urlencode($number_of_days), $new_url);
         }
         if (isset($_POST['wpuerrorlogs_search'])) {
-            $new_url = add_query_arg('s', urlencode($_POST['wpuerrorlogs_search']), $new_url);
+            $search = sanitize_text_field(wp_unslash($_POST['wpuerrorlogs_search']));
+            $new_url = add_query_arg('s', urlencode($search), $new_url);
         }
         if (isset($_POST['wpuerrorlogs_search_action'])) {
             $new_url = add_query_arg('has_action', 1, $new_url);
@@ -246,6 +229,91 @@ class WPUErrorLogs {
 
         wp_redirect($new_url);
         die;
+    }
+
+    /* ----------------------------------------------------------
+      Filters
+    ---------------------------------------------------------- */
+
+    public function get_request_number_of_days() {
+        $number_of_days = $this->number_of_days;
+        if (isset($_GET['number_of_days']) && is_numeric($_GET['number_of_days']) && $_GET['number_of_days'] <= $this->number_of_days) {
+            $number_of_days = intval($_GET['number_of_days']);
+        }
+        return $number_of_days;
+    }
+
+    public function get_request_search() {
+        if (!isset($_GET['s'])) {
+            return '';
+        }
+        return sanitize_text_field(wp_unslash($_GET['s']));
+    }
+
+    public function display_filter_form($number_of_days, $search) {
+        echo '<details ' . ($search || isset($_GET['has_action']) ? 'open' : '') . '>';
+        echo '<summary>' . __('Filter results', 'wpuerrorlogs') . '</summary>';
+
+        /* Select number of days */
+        echo '<p>';
+        echo '<label for="wpuerrorlogs_switch_day">' . __('Check the last :', 'wpuerrorlogs') . '</label><br />';
+        echo '<select name="number_of_days" id="wpuerrorlogs_switch_day">';
+        for ($i = $this->number_of_days; $i > 0; $i--) {
+            echo '<option value="' . $i . '"' . ($number_of_days == $i ? ' selected' : '') . '>' . ($i < 2 ? __('1 day', 'wpuerrorlogs') : sprintf(__('%s days', 'wpuerrorlogs'), $i)) . '</option>';
+        }
+        echo '</select>';
+        echo '<input type="hidden" name="wpuerrorlogs_search_action" value="1">';
+        echo '</p>';
+
+        /* Search bar */
+        echo '<p>';
+        echo '<label>' . __('Search in errors', 'wpuerrorlogs') . '</label><br />';
+        echo '<input name="wpuerrorlogs_search" type="search" placeholder="' . esc_attr__('Search', 'wpuerrorlogs') . '" value="' . esc_attr(htmlentities($search)) . '" id="wpuerrorlogs_search" />';
+        echo '</p>';
+
+        submit_button(__('Filter results', 'wpuerrorlogs'));
+
+        echo '</details>';
+    }
+
+    public function page_content__graphs() {
+
+        /* Find debug file */
+        if (!WP_DEBUG_LOG) {
+            echo __('Debug logs are not enabled', 'wpuerrorlogs');
+            return;
+        }
+
+        $number_of_days = $this->get_request_number_of_days();
+        $search = $this->get_request_search();
+        $errors = $this->get_logs(array(
+            'number_of_days' => $number_of_days,
+            'search_string' => $search
+        ));
+
+        $this->display_filter_form($number_of_days, $search);
+
+        $errors_by_day = $this->sort_errors_by_day($errors, $number_of_days);
+        if ($errors_by_day) {
+            echo '<h2>' . esc_html__('Errors by day', 'wpuerrorlogs') . '</h2>';
+            echo '<script>var wpuerrorlogs_errors_by_day = ' . json_encode($errors_by_day) . ';</script>';
+            echo '<canvas id="wpuerrorlogs_errors_by_day" style="width:100%;height:300px;"></canvas>';
+        }
+
+        $errors_by_hour = $this->sort_errors_by_hour($errors);
+        if ($errors_by_hour) {
+            echo '<h2>' . esc_html__('Errors by hour', 'wpuerrorlogs') . '</h2>';
+            echo '<script>var wpuerrorlogs_errors_by_hour = ' . json_encode($errors_by_hour) . ';</script>';
+            echo '<canvas id="wpuerrorlogs_errors_by_hour" style="width:100%;height:300px;"></canvas>';
+        }
+
+        $number_of_days_for_day_hour = min($number_of_days, 3);
+        $errors_by_day_hour = $this->sort_errors_by_day_hour($errors, $number_of_days_for_day_hour);
+        if ($errors_by_day_hour) {
+            echo '<h2>' . sprintf(__('Errors hour by hour (last %d days)', 'wpuerrorlogs'), $number_of_days_for_day_hour) . '</h2>';
+            echo '<script>var wpuerrorlogs_errors_by_day_hour = ' . json_encode($errors_by_day_hour) . ';</script>';
+            echo '<canvas id="wpuerrorlogs_errors_by_day_hour" style="width:100%;height:300px;"></canvas>';
+        }
     }
 
     /* ----------------------------------------------------------
@@ -313,6 +381,46 @@ class WPUErrorLogs {
         }
         ksort($errors_by_hour, SORT_NATURAL);
         return $errors_by_hour;
+    }
+
+    public function sort_errors_by_day($errors, $number_of_days = 5) {
+        if (!$errors) {
+            return array();
+        }
+        $errors_by_day = array();
+        for ($i = $number_of_days - 1; $i >= 0; $i--) {
+            $day = date('Y-m-d', time() - 86400 * $i);
+            $errors_by_day[$day] = 0;
+        }
+        foreach ($errors as $error) {
+            $day = date('Y-m-d', strtotime($error['date']));
+            if (!isset($errors_by_day[$day])) {
+                $errors_by_day[$day] = 0;
+            }
+            $errors_by_day[$day]++;
+        }
+        ksort($errors_by_day, SORT_NATURAL);
+        return $errors_by_day;
+    }
+
+    public function sort_errors_by_day_hour($errors, $number_of_days = 3) {
+        if (!$errors) {
+            return array();
+        }
+        $errors_by_day_hour = array();
+        $start = strtotime(date('Y-m-d 00:00:00', time() - 86400 * ($number_of_days - 1)));
+        for ($i = 0; $i < $number_of_days * 24; $i++) {
+            $key = date('Y-m-d H\h', $start + $i * 3600);
+            $errors_by_day_hour[$key] = 0;
+        }
+        foreach ($errors as $error) {
+            $key = date('Y-m-d H\h', strtotime($error['date']));
+            if (!isset($errors_by_day_hour[$key])) {
+                continue;
+            }
+            $errors_by_day_hour[$key]++;
+        }
+        return $errors_by_day_hour;
     }
 
     /* ----------------------------------------------------------
@@ -412,6 +520,9 @@ class WPUErrorLogs {
     }
 
     public function get_logs_from_file($file, $args = array()) {
+        if (!is_readable($file)) {
+            return array();
+        }
 
         $args = wp_parse_args($args, array(
             'max_date' => time(),

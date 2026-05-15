@@ -4,7 +4,7 @@ namespace wpuerrorlogs;
 /*
 Class Name: WPU Base Toolbox
 Description: Cool helpers for WordPress Plugins
-Version: 0.18.0
+Version: 0.24.1
 Class URI: https://github.com/WordPressUtilities/wpubaseplugin
 Author: Darklg
 Author URI: https://darklg.me/
@@ -15,11 +15,13 @@ License URI: https://opensource.org/licenses/MIT
 defined('ABSPATH') || die;
 
 class WPUBaseToolbox {
-    private $plugin_version = '0.18.0';
+    private $plugin_version = '0.24.1';
     private $args = array();
     private $missing_plugins = array();
+    private $invalid_plugins_versions = array();
     private $default_module_args = array(
         'need_form_js' => true,
+        'need_table_js' => false,
         'plugin_name' => 'WPU Base Toolbox'
     );
 
@@ -28,10 +30,18 @@ class WPUBaseToolbox {
             $args = array();
         }
         $this->args = array_merge($this->default_module_args, $args);
-
+        add_action('admin_enqueue_scripts', array(&$this,
+            'table_scripts'
+        ));
         add_action('wp_enqueue_scripts', array(&$this,
             'form_scripts'
         ));
+    }
+
+    public function table_scripts() {
+        if ($this->args['need_table_js']) {
+            wp_enqueue_script(__NAMESPACE__ . '-wpubasetoolbox-table-sort', plugins_url('assets/table-sort.js', __FILE__), array(), $this->plugin_version);
+        }
     }
 
     public function form_scripts() {
@@ -438,14 +448,20 @@ class WPUBaseToolbox {
         /* HEAD */
         $html .= '<thead><tr>';
         foreach ($array[0] as $key => $value) {
+            $attributes = array();
             $label = $key;
             if (isset($args['colnames'][$key])) {
-                $label = $args['colnames'][$key];
+                if (!is_array($args['colnames'][$key])) {
+                    $label = $args['colnames'][$key];
+                } else {
+                    $label = isset($args['colnames'][$key]['label']) ? $args['colnames'][$key]['label'] : $key;
+                    $attributes = isset($args['colnames'][$key]['attributes']) ? $args['colnames'][$key]['attributes'] : array();
+                }
             }
             if ($args['htmlspecialchars_th']) {
                 $label = htmlspecialchars($label);
             }
-            $html .= '<th>' . $label . '</th>';
+            $html .= '<th ' . $this->array_to_html_attributes($attributes) . '>' . $label . '</th>';
         }
         $html .= '</tr></thead>';
 
@@ -491,6 +507,17 @@ class WPUBaseToolbox {
         return array_merge(array_slice($array, 0, $pos), $new, array_slice($array, $pos));
     }
 
+    function array_columns_to_move_first($array, $columns = array()) {
+        $new_array = array();
+        foreach ($columns as $key) {
+            if (isset($array[$key])) {
+                $new_array[$key] = $array[$key];
+                unset($array[$key]);
+            }
+        }
+        return array_merge($new_array, $array);
+    }
+
     /* ----------------------------------------------------------
       Export
     ---------------------------------------------------------- */
@@ -514,7 +541,6 @@ class WPUBaseToolbox {
             $all_keys = array_merge($all_keys, array_keys($item));
         }
         $all_keys = array_unique($all_keys);
-
         foreach ($data as $item_key => $item) {
             /* Ensure all rows have the same keys */
             foreach ($all_keys as $k) {
@@ -523,9 +549,8 @@ class WPUBaseToolbox {
                 }
             }
             /* Ensure same sorting of all keys */
-            ksort($data[$item_key]);
+            $data[$item_key] = $this->array_columns_to_move_first($data[$item_key], $all_keys);
         }
-
         return $data;
     }
 
@@ -553,31 +578,48 @@ class WPUBaseToolbox {
             return;
         }
 
+        /* Correct headers */
+        header('Content-Type: application/csv');
+        header('Content-Disposition: attachment; filename=' . $name . '.csv');
+        header('Pragma: no-cache');
+
+        echo $this->export_array_to_csv_string($array, $args);
+        die;
+    }
+
+    /* Array to CSV string
+    -------------------------- */
+
+    public function export_array_to_csv_string($array, $args = array()) {
+        if (!isset($array[0])) {
+            return '';
+        }
+
         if (!is_array($args)) {
             $args = array();
         }
         $args = array_merge(array(
+            'add_keys' => true,
             'separator' => ',',
             'enclosure' => '"'
         ), $args);
 
         $array = $this->export_array_clean_for_csv($array);
 
-        /* Correct headers */
-        header('Content-Type: application/csv');
-        header('Content-Disposition: attachment; filename=' . $name . '.csv');
-        header('Pragma: no-cache');
-
         $all_keys = array_keys($array[0]);
 
         /* Build and send CSV */
+        ob_start();
         $output = fopen("php://output", 'w');
-        fputcsv($output, $all_keys, $args['separator'], $args['enclosure']);
+        if ($args['add_keys']) {
+            fputcsv($output, $all_keys, $args['separator'], $args['enclosure']);
+        }
         foreach ($array as $item) {
             fputcsv($output, $item, $args['separator'], $args['enclosure']);
         }
         fclose($output);
-        die;
+        return ob_get_clean();
+
     }
 
     /* ----------------------------------------------------------
@@ -635,7 +677,9 @@ class WPUBaseToolbox {
 
             foreach ($plugin['path'] as $plugin_path) {
                 if (is_plugin_active($plugin_path) || is_plugin_active_for_network($plugin_path)) {
+                    $this->check_plugin_version($plugin, WP_PLUGIN_DIR . '/' . $plugin_path);
                     $has_plugin = true;
+                    break;
                 }
 
                 /* Get active must-use plugins list */
@@ -645,6 +689,7 @@ class WPUBaseToolbox {
                 );
                 foreach ($mu_plugins_path as $mu_plugins_dir) {
                     if (is_dir($mu_plugins_dir) && file_exists($mu_plugins_dir . '/' . $plugin_path)) {
+                        $this->check_plugin_version($plugin, $mu_plugins_dir . '/' . $plugin_path);
                         $has_plugin = true;
                         break;
                     }
@@ -660,6 +705,26 @@ class WPUBaseToolbox {
             add_action('admin_notices', array(&$this,
                 'set_error_missing_plugins'
             ));
+        }
+        if (!empty($this->invalid_plugins_versions)) {
+            add_action('admin_notices', array(&$this,
+                'set_error_invalid_plugins_versions'
+            ));
+        }
+    }
+
+    public function check_plugin_version($plugin, $plugin_path) {
+        if (!isset($plugin['min_version'])) {
+            return;
+        }
+
+        $plugin_data = get_plugin_data($plugin_path);
+        if (version_compare($plugin_data['Version'], $plugin['min_version'], '<')) {
+            $this->invalid_plugins_versions[] = array(
+                'name' => $plugin_data['Name'],
+                'current_version' => $plugin_data['Version'],
+                'required_version' => $plugin['min_version']
+            );
         }
     }
 
@@ -678,6 +743,26 @@ class WPUBaseToolbox {
             echo '</ul>';
         } else {
             echo '<p>' . sprintf(__('The plugin <b>%s</b> depends on the <b>%s</b> plugin. Please install and activate it.', __NAMESPACE__), $this->args['plugin_name'], $this->get_missing_plugin_display_name($this->missing_plugins[0])) . '</p>';
+        }
+        echo '</div>';
+    }
+
+    public function set_error_invalid_plugins_versions() {
+
+        if (!$this->invalid_plugins_versions) {
+            return;
+        }
+
+        echo '<div class="error">';
+        if (count($this->invalid_plugins_versions) > 1) {
+            echo '<p>' . sprintf(__('The plugin <b>%s</b> needs specific plugins versions. Please update them:', __NAMESPACE__), $this->args['plugin_name']) . '</p><ul>';
+            foreach ($this->invalid_plugins_versions as $plugin) {
+                echo '<li>- ' . esc_html($plugin['name']) . ' (current version: ' . esc_html($plugin['current_version']) . ', required version: ' . esc_html($plugin['required_version']) . ')</li>';
+            }
+            echo '</ul>';
+        } else {
+            $plugin = $this->invalid_plugins_versions[0];
+            echo '<p>' . sprintf(__('The plugin <b>%s</b> needs a specific <b>%s</b> plugin version. Please update it to at least version %s (current version: %s).', __NAMESPACE__), $this->args['plugin_name'], esc_html($plugin['name']), esc_html($plugin['required_version']), esc_html($plugin['current_version'])) . '</p>';
         }
         echo '</div>';
     }
@@ -709,4 +794,145 @@ class WPUBaseToolbox {
         die;
     }
 
+    /* ----------------------------------------------------------
+      Widgets
+    ---------------------------------------------------------- */
+
+    public function admin_widget_build_table($lines, $args = array()) {
+
+        if (!is_array($args)) {
+            $args = array();
+        }
+
+        $args = array_merge(array(
+            'columns' => array(),
+            'esc_html_columns' => true,
+            'esc_html_line_values' => true,
+            'empty_message' => __('No data available.', __NAMESPACE__)
+        ), $args);
+
+        if (!is_array($lines) || empty($lines)) {
+            return '<p>' . $args['empty_message'] . '</p>';
+        }
+
+        $html = '';
+        $html .= '<div style="max-height:400px;overflow:auto"><table class="widefat striped">';
+        if (isset($args['columns']) && is_array($args['columns'])) {
+            $html .= '<thead><tr>';
+            foreach ($args['columns'] as $col_name) {
+                $col_name_display = $args['esc_html_columns'] ? esc_html($col_name) : $col_name;
+                $html .= '<th>' . $col_name_display . '</th>';
+            }
+            $html .= '</tr></thead>';
+        }
+        $html .= '<tbody>';
+        foreach ($lines as $line) {
+            $html .= '<tr>';
+            foreach ($line as $line_value) {
+                $line_value_display = $args['esc_html_line_values'] ? esc_html($line_value) : $line_value;
+                $html .= '<td>' . $line_value_display . '</td>';
+            }
+            $html .= '</tr>';
+        }
+        $html .= '</tbody>';
+        $html .= '</table></div>';
+
+        return $html;
+    }
+
+    /* ----------------------------------------------------------
+      URLs
+    ---------------------------------------------------------- */
+
+    public function unparse_url($parsed_url) {
+        $scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+        $user = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass = isset($parsed_url['pass']) ? ':' . $parsed_url['pass'] : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $path = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
+    }
+
+    /* ----------------------------------------------------------
+      User roles
+    ---------------------------------------------------------- */
+
+    function create_custom_user_role($capacities = array(), $args = array()) {
+        if (!get_site_url()) {
+            return;
+        }
+
+        if (!is_array($args) || !is_array($capacities)) {
+            error_log('WPUBaseToolbox::create_custom_user_role: $capacities and $args should be arrays');
+            return;
+        }
+
+        if (!isset($args['role_opt'], $args['role_id'], $args['role_name'])) {
+            error_log('WPUBaseToolbox::create_custom_user_role: Missing required arguments (role_opt, role_id, role_name)');
+            return;
+        }
+
+        $args = array_merge(array(
+            'base_role' => 'editor'
+        ), $args);
+
+        /* Start on a role */
+        $base_role = get_role($args['base_role']);
+        $role_details = $base_role->capabilities;
+
+        /* Add new capacities */
+        foreach ($capacities as $cap => $granted) {
+            $role_details[$cap] = $granted;
+        }
+
+        $role_details = apply_filters($args['role_opt'] . '__roles', $role_details);
+        $role_version = md5($args['role_id'] . json_encode($role_details));
+
+        /* Update role only if it doesn’t exist */
+        if (get_option($args['role_opt']) != $role_version) {
+            if (get_role($args['role_id'])) {
+                remove_role($args['role_id']);
+            }
+            add_role($args['role_id'], $args['role_name'], $role_details);
+            update_option($args['role_opt'], $role_version);
+        }
+
+    }
+
+    /* ----------------------------------------------------------
+      Markdown to HTML
+    ---------------------------------------------------------- */
+
+    function markdown_to_html($text) {
+        $text = trim(wp_strip_all_tags($text));
+
+        /* Bold */
+        $text = preg_replace('/\*\*(.+?)\*\*/', '<strong>$1</strong>', $text);
+
+        /* Italic */
+        $text = preg_replace('/\*(.+?)\*/', '<em>$1</em>', $text);
+
+        /* Links */
+        $text = preg_replace('/\[(.+?)\]\((.+?)\)/', '<a href="$2" rel="noopener noreferrer" target="_blank">$1</a>', $text);
+
+        /* Convert dashes to ul/li */
+        $lines = explode("\n", $text);
+        foreach ($lines as $line) {
+            if (preg_match('/^\s*-\s+(.+)/', $line, $matches)) {
+                $new_line = '<ul><li>' . trim($matches[1]) . '</li></ul>';
+                $text = str_replace($line, $new_line, $text);
+            }
+        }
+        $text = preg_replace('/<\/ul>\s*<ul>/', '', $text);
+
+        /* Line breaks */
+        $text = preg_replace('/\n/', '<br />', $text);
+        $text = force_balance_tags($text);
+
+        return $text;
+    }
 }

@@ -14,7 +14,3 @@ foreach ($options as $opt) {
     delete_option($opt);
     delete_site_option($opt);
 }
-
-/* Delete tables */
-global $wpdb;
-$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}wpuerrorlogs_logs");
