@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.12.0
+Version: 0.12.1
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.12.0';
+    private $plugin_version = '0.12.1';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -251,7 +251,8 @@ class WPUErrorLogs {
     }
 
     public function display_filter_form($number_of_days, $search) {
-        echo '<details ' . ($search || isset($_GET['has_action']) ? 'open' : '') . '>';
+        $has_search = $search || isset($_GET['has_action']);
+        echo '<details ' . ($has_search ? 'open' : '') . '>';
         echo '<summary>' . __('Filter results', 'wpuerrorlogs') . '</summary>';
 
         /* Select number of days */
@@ -271,7 +272,13 @@ class WPUErrorLogs {
         echo '<input name="wpuerrorlogs_search" type="search" placeholder="' . esc_attr__('Search', 'wpuerrorlogs') . '" value="' . esc_attr(htmlentities($search)) . '" id="wpuerrorlogs_search" />';
         echo '</p>';
 
-        submit_button(__('Filter results', 'wpuerrorlogs'));
+        echo '<p>';
+        submit_button(__('Filter results', 'wpuerrorlogs'), 'primary', 'wpuerrorlogs_search_action', false);
+        if ($has_search) {
+            echo ' ';
+            echo '<a href="' . esc_url($this->adminpages->get_page_url('main')) . '" class="button button-secondary">' . __('Reset filters', 'wpuerrorlogs') . '</a>';
+        }
+        echo '</p>';
 
         echo '</details>';
     }
