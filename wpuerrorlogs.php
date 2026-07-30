@@ -4,7 +4,7 @@ Plugin Name: WPU Error Logs
 Plugin URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Update URI: https://github.com/WordPressUtilities/wpuerrorlogs
 Description: Make sense of your log files
-Version: 0.12.1
+Version: 0.13.0
 Author: Darklg
 Author URI: https://github.com/Darklg
 Text Domain: wpuerrorlogs
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 class WPUErrorLogs {
     public $settings_update;
     private $number_of_days = 10;
-    private $plugin_version = '0.12.1';
+    private $plugin_version = '0.13.0';
     private $plugin_settings = array(
         'id' => 'wpuerrorlogs',
         'name' => 'WPU Error Logs'
@@ -31,6 +31,8 @@ class WPUErrorLogs {
     private $basetoolbox;
     private $adminpages;
     private $plugin_description;
+    public $max_log_bytes_read = 10485760; // 10 MB
+    public $truncated_files = array();
 
     public function __construct() {
         add_action('init', array(&$this, 'load_translation'));
@@ -129,6 +131,7 @@ class WPUErrorLogs {
             'text' => __('Text', 'wpuerrorlogs')
         );
 
+        $this->display_truncated_notice();
         $this->display_filter_form($number_of_days, $search);
 
         /* Top errors */
@@ -250,6 +253,23 @@ class WPUErrorLogs {
         return sanitize_text_field(wp_unslash($_GET['s']));
     }
 
+    public function display_truncated_notice() {
+        if (empty($this->truncated_files)) {
+            return;
+        }
+        foreach ($this->truncated_files as $file => $size) {
+            echo '<div class="notice notice-warning"><p>';
+            echo sprintf(
+                /* translators: 1: file name, 2: human-readable size, 3: human-readable read chunk size */
+                esc_html__('The log file %1$s is large (%2$s). Only the most recent errors (last %3$s) are displayed.', 'wpuerrorlogs'),
+                '<code>' . esc_html(basename($file)) . '</code>',
+                esc_html(size_format($size)),
+                esc_html(size_format($this->max_log_bytes_read))
+            );
+            echo '</p></div>';
+        }
+    }
+
     public function display_filter_form($number_of_days, $search) {
         $has_search = $search || isset($_GET['has_action']);
         echo '<details ' . ($has_search ? 'open' : '') . '>';
@@ -298,6 +318,7 @@ class WPUErrorLogs {
             'search_string' => $search
         ));
 
+        $this->display_truncated_notice();
         $this->display_filter_form($number_of_days, $search);
 
         $errors_by_day = $this->sort_errors_by_day($errors, $number_of_days);
@@ -537,7 +558,20 @@ class WPUErrorLogs {
             'excluded_strings' => array()
         ));
 
-        $lines = array_reverse(file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+        $filesize = filesize($file);
+        if ($filesize > $this->max_log_bytes_read) {
+            /* Read only the tail to bound memory: seek near EOF, drop the first (partial) line */
+            $this->truncated_files[$file] = $filesize;
+            $fp = fopen($file, 'r');
+            fseek($fp, $filesize - $this->max_log_bytes_read);
+            $content = fread($fp, $this->max_log_bytes_read);
+            fclose($fp);
+            $lines = explode("\n", $content);
+            array_shift($lines); // drop the cut-off partial line
+            $lines = array_reverse(array_filter($lines, 'strlen'));
+        } else {
+            $lines = array_reverse(file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+        }
         $errors = [];
         $default_error = array(
             'date' => 'none',
